@@ -1,0 +1,43 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.venv/
+
+# ── Environment / Secrets ─────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Build output ──────────────────────────────────────────────
+dist/
+build/
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+scripts/*.log
+
+# ── Dataset (large binary files, import via script) ───────────
+dataset/
+
+# ── Docker volumes ────────────────────────────────────────────
+postgres_data/
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Claude Code ───────────────────────────────────────────────
+.claude/

@@ -1,0 +1,183 @@
+// ============================================================
+// Bharat Geo API — India Village Geo Data API
+// Prisma Schema (PostgreSQL / NeonDB)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// GEOGRAPHICAL HIERARCHY
+// ============================================================
+
+model Country {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  isoCode   String   @unique @db.VarChar(3)   // e.g. "IND"
+  createdAt DateTime @default(now())
+
+  states State[]
+
+  @@map("countries")
+}
+
+model State {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  censusCode  String   @db.VarChar(10)          // census code e.g. "02"
+  countryId   Int
+
+  country     Country   @relation(fields: [countryId], references: [id])
+  districts   District[]
+
+  @@unique([censusCode, countryId])
+  @@index([countryId])
+  @@index([name])
+  @@map("states")
+}
+
+model District {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  censusCode  String   @db.VarChar(10)
+  stateId     Int
+
+  state        State         @relation(fields: [stateId], references: [id])
+  subDistricts SubDistrict[]
+
+  @@unique([censusCode, stateId])
+  @@index([stateId])
+  @@index([name])
+  @@map("districts")
+}
+
+model SubDistrict {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  censusCode  String   @db.VarChar(10)
+  districtId  Int
+
+  district  District  @relation(fields: [districtId], references: [id])
+  villages  Village[]
+
+  @@unique([censusCode, districtId])
+  @@index([districtId])
+  @@index([name])
+  @@map("sub_districts")
+}
+
+model Village {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(150)
+  censusCode     String   @db.VarChar(10)
+  subDistrictId  Int
+
+  // Census 2011 demographic fields (nullable — not all entries have data)
+  totalPopulation  Int?
+  malePopulation   Int?
+  femalePopulation Int?
+  totalHouseholds  Int?
+
+  subDistrict SubDistrict @relation(fields: [subDistrictId], references: [id])
+
+  @@unique([censusCode, subDistrictId])
+  @@index([subDistrictId])
+  @@index([name])
+  @@map("villages")
+}
+
+// ============================================================
+// USERS & AUTH
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  CLIENT
+}
+
+enum UserStatus {
+  PENDING    // awaiting admin approval
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @db.VarChar(255)
+  fullName     String     @db.VarChar(150)
+  company      String?    @db.VarChar(150)
+  role         UserRole   @default(CLIENT)
+  status       UserStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  apiKeys ApiKey[]
+  apiLogs ApiLog[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+// ============================================================
+// API KEY SYSTEM
+// ============================================================
+
+enum ApiPlan {
+  FREE        // 5 000 / day
+  PREMIUM     // 50 000 / day
+  PRO         // 300 000 / day
+  UNLIMITED   // 1 000 000 / day
+}
+
+model ApiKey {
+  id          Int      @id @default(autoincrement())
+  keyPrefix   String   @unique @db.VarChar(16)  // public identifier e.g. "bsk_a1b2c3d4"
+  secretHash  String   @db.VarChar(255)          // bcrypt hash of full secret
+  plan        ApiPlan  @default(FREE)
+  isActive    Boolean  @default(true)
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expiresAt   DateTime?
+
+  user    User     @relation(fields: [userId], references: [id])
+  apiLogs ApiLog[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("api_keys")
+}
+
+// ============================================================
+// API REQUEST LOGGING
+// ============================================================
+
+model ApiLog {
+  id           BigInt   @id @default(autoincrement())
+  endpoint     String   @db.VarChar(255)
+  method       String   @db.VarChar(10)
+  statusCode   Int
+  responseTime Int                                // milliseconds
+  ipAddress    String?  @db.VarChar(45)           // supports IPv6
+  userAgent    String?  @db.Text
+  userId       Int?
+  apiKeyId     Int?
+  createdAt    DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id])
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  @@index([apiKeyId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([endpoint])
+  @@map("api_logs")
+}

@@ -1,0 +1,62 @@
+services:
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bharatgeo_api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRES_IN: 7d
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Admin Dashboard
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: bharatgeo_admin
+    depends_on:
+      - api
+    ports:
+      - "5174:5174"
+
+  # Client Portal
+  client-portal:
+    build:
+      context: ./client-portal
+      dockerfile: Dockerfile
+    container_name: bharatgeo_client_portal
+    depends_on:
+      - api
+    ports:
+      - "5175:5175"
+
+  # Demo App
+  demo:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile
+    container_name: bharatgeo_demo
+    depends_on:
+      - api
+    ports:
+      - "5176:5176"
+
+networks:
+  default:
+    name: bharatgeo_network
