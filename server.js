@@ -28,9 +28,22 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ── Start ─────────────────────────────────────────────────────
+async function connectWithRetry(retries = 5, delayMs = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await prisma.$connect();
+      return;
+    } catch (err) {
+      if (i === retries) throw err;
+      console.log(`DB connection attempt ${i}/${retries} failed, retrying in ${delayMs / 1000}s…`);
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+}
+
 async function start() {
   try {
-    await prisma.$connect();
+    await connectWithRetry();
     console.log("Database connected");
 
     app.listen(PORT, () => {

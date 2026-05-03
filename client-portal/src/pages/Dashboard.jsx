@@ -2,26 +2,27 @@ import { useEffect, useState } from "react";
 import api from "../api/client";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const TOOLTIP_STYLE = { background: "#1e293b", border: "1px solid #334155", borderRadius: "10px", color: "#f1f5f9", fontSize: 12 };
+const PLAN_COLORS = { FREE: "var(--text-muted)", PREMIUM: "var(--purple)", PRO: "var(--green)", UNLIMITED: "var(--yellow-text)" };
+const PLAN_DIMS   = { FREE: "rgba(85,85,85,0.15)", PREMIUM: "var(--purple-dim)", PRO: "var(--green-dim)", UNLIMITED: "var(--yellow-dim)" };
 
 function UsageBar({ percent }) {
-  const color = percent > 90 ? "#ef4444" : percent > 70 ? "#f59e0b" : "#6366f1";
+  const color = percent > 90 ? "var(--red-text)" : percent > 70 ? "var(--yellow-text)" : "var(--green)";
   return (
-    <div className="mt-3">
-      <div className="flex justify-between text-xs mb-1.5" style={{ color: "#475569" }}>
+    <div style={{ marginTop: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>
         <span>{percent}% used today</span>
         <span>{100 - percent}% remaining</span>
       </div>
-      <div className="w-full rounded-full h-1.5" style={{ background: "#1e293b" }}>
-        <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.min(percent, 100)}%`, background: color }} />
+      <div style={{ width: "100%", height: 4, borderRadius: 9, background: "var(--divider)" }}>
+        <div style={{ height: 4, borderRadius: 9, width: `${Math.min(percent, 100)}%`, background: color, transition: "width 0.4s" }} />
       </div>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const [usage, setUsage]   = useState(null);
-  const [daily, setDaily]   = useState([]);
+  const [usage, setUsage]     = useState(null);
+  const [daily, setDaily]     = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,45 +32,47 @@ export default function Dashboard() {
   }, []);
 
   if (loading) return (
-    <div className="flex items-center gap-2 pt-4" style={{ color: "#475569" }}>
-      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-      <span className="text-sm">Loading…</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 13, paddingTop: 16 }}>
+      <svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+      </svg>
+      Loading…
     </div>
   );
 
-  const PLAN_COLOR = { FREE: "#64748b", PREMIUM: "#6366f1", PRO: "#8b5cf6", UNLIMITED: "#f59e0b" };
+  const th = { padding: "12px 18px", textAlign: "left", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)" };
+  const td = { padding: "14px 18px", fontSize: 13 };
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       <div>
-        <h1 className="text-3xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f1f5f9" }}>Dashboard</h1>
-        <p className="text-sm mt-1" style={{ color: "#475569" }}>Your usage and API activity</p>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "var(--text)", margin: "0 0 4px" }}>Dashboard</h1>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>Your usage and API activity</p>
       </div>
 
       {/* API Key Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {usage?.apiKeys?.length === 0 ? (
-          <div className="col-span-2 rounded-2xl p-8 text-center" style={{ background: "#0f172a", border: "1px dashed #1e293b" }}>
-            <p className="font-semibold text-sm" style={{ color: "#818cf8" }}>No active API keys</p>
-            <p className="text-xs mt-1" style={{ color: "#475569" }}>Go to API Keys to generate your first key.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        {usage?.apiKeys?.length === 0 && (
+          <div style={{ gridColumn: "1/-1", borderRadius: 18, padding: "36px 24px", textAlign: "center", background: "var(--card)", border: "1px dashed var(--card-border)" }}>
+            <p style={{ fontWeight: 600, fontSize: 13, color: "var(--purple-text)", margin: "0 0 4px" }}>No active API keys</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>Go to API Keys to generate your first key.</p>
           </div>
-        ) : null}
+        )}
         {usage?.apiKeys?.map(k => (
-          <div key={k.id} className="rounded-2xl p-5" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-            <div className="flex items-center justify-between mb-4">
-              <code className="text-xs font-mono" style={{ color: "#94a3b8" }}>{k.keyPrefix}…</code>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ background: `${PLAN_COLOR[k.plan]}15`, color: PLAN_COLOR[k.plan], border: `1px solid ${PLAN_COLOR[k.plan]}30` }}>
-                {k.plan}
-              </span>
+          <div key={k.id} style={{ borderRadius: 18, padding: 20, background: "var(--card)", border: "1px solid var(--card-border-p)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <code style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text-2)" }}>{k.keyPrefix}…</code>
+              <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: PLAN_DIMS[k.plan], color: PLAN_COLORS[k.plan] }}>{k.plan}</span>
             </div>
-            <div className="flex justify-between items-end">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <p className="text-3xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f1f5f9" }}>{k.usedToday.toLocaleString()}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#475569" }}>requests today</p>
+                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "var(--text)", margin: 0 }}>{k.usedToday.toLocaleString()}</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "2px 0 0" }}>requests today</p>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold" style={{ color: "#6ee7b7" }}>{k.remaining.toLocaleString()}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#475569" }}>remaining</p>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontWeight: 700, fontSize: 20, color: "var(--green-text)", margin: 0 }}>{k.remaining.toLocaleString()}</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "2px 0 0" }}>remaining</p>
               </div>
             </div>
             <UsageBar percent={k.percentUsed} />
@@ -78,54 +81,56 @@ export default function Dashboard() {
       </div>
 
       {/* Chart */}
-      <div className="rounded-2xl p-6" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-        <h2 className="text-sm font-bold mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#cbd5e1" }}>Request History — 14 days</h2>
+      <div style={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 18, padding: 24 }}>
+        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-2)", margin: "0 0 20px" }}>Request History — 14 days</h2>
         {daily.length ? (
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={daily} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
-                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                <linearGradient id="cpGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#00e676" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#00e676" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#475569" }} tickFormatter={d => d.slice(5)} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#94a3b8" }} formatter={v => [v.toLocaleString(), "Requests"]} />
-              <Area type="monotone" dataKey="requests" stroke="#6366f1" fill="url(#grad)" strokeWidth={2} dot={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickFormatter={d => d.slice(5)} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: "var(--tooltip-bg)", border: "1px solid var(--card-border)", borderRadius: 10, color: "var(--text)", fontSize: 12 }} labelStyle={{ color: "var(--text-2)" }} formatter={v => [v.toLocaleString(), "Requests"]} />
+              <Area type="monotone" dataKey="requests" stroke="var(--green)" fill="url(#cpGrad)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-sm text-center py-12" style={{ color: "#334155" }}>No request data yet.</p>
+          <p style={{ fontSize: 13, textAlign: "center", padding: "40px 0", color: "var(--text-muted)", margin: 0 }}>No request data yet.</p>
         )}
       </div>
 
       {/* Recent requests */}
-      <div className="rounded-2xl" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-        <div className="px-6 pt-5 pb-4" style={{ borderBottom: "1px solid #1e293b" }}>
-          <h2 className="text-sm font-bold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#cbd5e1" }}>Recent Requests</h2>
+      <div style={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 18, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--divider)" }}>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 13, color: "var(--text-2)", margin: 0 }}>Recent Requests</h2>
         </div>
-        <table className="w-full text-sm">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid #1e293b" }}>
+            <tr style={{ borderBottom: "1px solid var(--divider)", background: "var(--table-head)" }}>
               {["Endpoint", "Method", "Status", "ms", "Time"].map((h, i) => (
-                <th key={h} className={`px-6 py-3 text-xs font-semibold uppercase tracking-wide ${i > 1 ? "text-right" : "text-left"}`} style={{ color: "#475569" }}>{h}</th>
+                <th key={h} style={{ ...th, textAlign: i > 1 ? "right" : "left" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {usage?.recentLogs?.map((l, i) => (
-              <tr key={String(l.id)} style={{ borderBottom: i < usage.recentLogs.length - 1 ? "1px solid #1e293b" : "none" }}>
-                <td className="px-6 py-3 font-mono text-xs" style={{ color: "#94a3b8" }}>{l.endpoint}</td>
-                <td className="px-6 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>{l.method}</td>
-                <td className={`px-6 py-3 text-xs font-bold text-right`} style={{ color: l.statusCode < 400 ? "#6ee7b7" : "#f87171" }}>{l.statusCode}</td>
-                <td className="px-6 py-3 text-xs text-right" style={{ color: "#475569" }}>{l.responseTime}</td>
-                <td className="px-6 py-3 text-xs text-right" style={{ color: "#475569" }}>{new Date(l.createdAt).toLocaleTimeString()}</td>
+              <tr key={String(l.id)} style={{ borderBottom: i < usage.recentLogs.length - 1 ? "1px solid var(--divider)" : "none" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--row-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = ""}>
+                <td style={{ ...td, fontFamily: "monospace", fontSize: 12, color: "var(--text-2)" }}>{l.endpoint}</td>
+                <td style={{ ...td, fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>{l.method}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 12, fontWeight: 700, color: l.statusCode < 400 ? "var(--green-text)" : "var(--red-text)" }}>{l.statusCode}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 12, color: "var(--text-muted)" }}>{l.responseTime}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 12, color: "var(--text-muted)" }}>{new Date(l.createdAt).toLocaleTimeString()}</td>
               </tr>
             ))}
             {!usage?.recentLogs?.length && (
-              <tr><td colSpan={5} className="px-6 py-10 text-center text-sm" style={{ color: "#334155" }}>No requests yet.</td></tr>
+              <tr><td colSpan={5} style={{ padding: "40px 18px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No requests yet.</td></tr>
             )}
           </tbody>
         </table>
