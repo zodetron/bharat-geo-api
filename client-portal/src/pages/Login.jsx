@@ -25,38 +25,59 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-indigo-500 to-pink-400">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
-        <p className="text-sm text-gray-500 mb-6">Sign in to your developer account</p>
-
-        {error && (
-          <div className="mb-4 px-4 py-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-            {error}
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "radial-gradient(ellipse 90% 60% at 50% -10%, rgba(99,102,241,0.2) 0%, #080c14 65%)" }}>
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: "linear-gradient(135deg, #6366f1, #3b82f6)" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+              <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+            </svg>
           </div>
-        )}
+          <h1 className="text-2xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f1f5f9" }}>Welcome back</h1>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Sign in to your developer account</p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <button type="submit" disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-            {loading ? "Signing in…" : "Sign In"}
-          </button>
-        </form>
+        <div className="rounded-2xl p-7" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
+          {error && (
+            <div className="mb-5 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#fca5a5" }}>
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Email</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                style={{ background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9" }}
+                onFocus={e => e.target.style.borderColor = "#6366f1"}
+                onBlur={e => e.target.style.borderColor = "#334155"} />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Password</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                style={{ background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9" }}
+                onFocus={e => e.target.style.borderColor = "#6366f1"}
+                onBlur={e => e.target.style.borderColor = "#334155"} />
+            </div>
+            <button type="submit" disabled={loading}
+              className="w-full py-3 rounded-xl text-sm font-semibold transition-all mt-2"
+              style={{ background: loading ? "#312e81" : "linear-gradient(135deg, #6366f1, #3b82f6)", color: "white", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
 
-        <p className="mt-4 text-center text-sm text-gray-500">
-          No account?{" "}
-          <Link to="/register" className="text-indigo-600 hover:underline">Request access</Link>
-        </p>
+          <p className="mt-5 text-center text-sm" style={{ color: "#475569" }}>
+            No account?{" "}
+            <Link to="/register" className="font-semibold transition-colors" style={{ color: "#818cf8" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#a5b4fc"}
+              onMouseLeave={e => e.currentTarget.style.color = "#818cf8"}>
+              Request access →
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
