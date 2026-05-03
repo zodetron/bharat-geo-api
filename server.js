@@ -31,7 +31,7 @@ const pub = path.join(__dirname, "public");
 ["admin", "client", "demo"].forEach((app_) => {
   const dir = path.join(pub, app_);
   app.use(`/${app_}`, express.static(dir));
-  app.get(`/${app_}/*`, (_req, res) => res.sendFile(path.join(dir, "index.html")));
+  app.use(`/${app_}`, (_req, res) => res.sendFile(path.join(dir, "index.html")));
 });
 app.get("/", (_req, res) => res.redirect("/demo/"));
 
