@@ -106,7 +106,7 @@ export default function App() {
             <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", margin: "0 0 4px" }}>Enter your API key to start</p>
             <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 16px" }}>
               No key?{" "}
-              <a href={`${import.meta.env.VITE_CLIENT_PORTAL_URL || "http://localhost:5175"}/register`}
+              <a href={`${import.meta.env.VITE_CLIENT_PORTAL_URL || "/client"}/register`}
                 style={{ color: "var(--purple-text)", fontWeight: 600, textDecoration: "none" }}>Request access →</a>
             </p>
             <div style={{ display: "flex", gap: 10 }}>

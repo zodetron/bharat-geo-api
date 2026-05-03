@@ -1,5 +1,5 @@
 services:
-  # API Server
+  # ── API Server ────────────────────────────────────────────────
   api:
     build:
       context: .
@@ -13,49 +13,24 @@ services:
       JWT_EXPIRES_IN: 7d
       UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
       UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./src:/app/src
-      - ./scripts:/app/scripts
+      CORS_ORIGINS: ${CORS_ORIGINS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 10s
 
-  # Admin Dashboard
-  admin:
+  # ── Gateway (all frontends + API proxy) ───────────────────────
+  gateway:
     build:
-      context: ./admin
-      dockerfile: Dockerfile
-    container_name: bharatgeo_admin
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: bharatgeo_gateway
+    ports:
+      - "80:80"
     depends_on:
       - api
-    ports:
-      - "5174:5174"
-
-  # Client Portal
-  client-portal:
-    build:
-      context: ./client-portal
-      dockerfile: Dockerfile
-    container_name: bharatgeo_client_portal
-    depends_on:
-      - api
-    ports:
-      - "5175:5175"
-
-  # Demo App
-  demo:
-    build:
-      context: ./demo
-      dockerfile: Dockerfile
-    container_name: bharatgeo_demo
-    depends_on:
-      - api
-    ports:
-      - "5176:5176"
 
 networks:
   default:

@@ -2,7 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/admin/" : "/",
   plugins: [react(), tailwindcss()],
   server: {
     port: 5174,
@@ -10,4 +11,4 @@ export default defineConfig({
       "/api": { target: "http://localhost:3000", changeOrigin: true },
     },
   },
-});
+}));

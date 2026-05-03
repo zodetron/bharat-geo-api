@@ -12,41 +12,52 @@ A production-grade SaaS platform serving India's complete village-level geograph
 | **Auth** | JWT for dashboard access · API Key (`X-API-Key`) for geo endpoints |
 | **Rate Limiting** | Redis-based daily counters — FREE / PREMIUM / PRO / UNLIMITED |
 | **Caching** | Upstash Redis — search (5 min), autocomplete (2 min), key validation (1 min) |
-| **Deployment** | Docker Compose — 4 containers behind nginx reverse proxies |
+| **Deployment** | Docker Compose — single gateway nginx on port 80, path-based routing |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                          Browsers                                │
-│                                                                  │
-│   :5174  Admin Dashboard    :5175  Client Portal    :5176  Demo  │
-└──────────┬───────────────────────────┬───────────────────┬───────┘
-           │                           │                   │
-           │  nginx (per container)    │                   │
-           │  location /api/ → api:3000│                   │
-           ▼                           ▼                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      Express API  :3000                          │
-│                                                                  │
-│  requestLogger → apiKeyAuth → rateLimiter → controller           │
-│                                                                  │
-│  /api/v1/auth/*        JWT authentication                        │
-│  /api/v1/api-keys/*    Key management (JWT)                      │
-│  /api/v1/admin/*       Admin endpoints (JWT + ADMIN role)        │
-│  /api/v1/client/*      Usage endpoints (JWT)                     │
-│  /api/v1/states/*   ─┐                                           │
-│  /api/v1/districts/* ├─ Geo hierarchy  (API Key required)        │
-│  /api/v1/search      ─┘                                          │
-└──────────────────┬───────────────────────┬───────────────────────┘
-                   │                       │
-                   ▼                       ▼
-        PostgreSQL (NeonDB)        Redis (Upstash REST)
-        Geo hierarchy              Search & autocomplete cache
-        Users & API keys           Rate limit counters (daily)
-        ApiLogs (BigInt id)        API key validation cache
+┌─────────────────────────────────────────────────────────────────┐
+│                          Browser                                │
+│                                                                 │
+│   https://yourdomain.com/admin    → Admin Dashboard             │
+│   https://yourdomain.com/client   → Client Portal               │
+│   https://yourdomain.com/demo     → Autocomplete Demo           │
+│   https://yourdomain.com/api/v1/* → REST API                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ :80
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               bharatgeo_gateway  (nginx)                        │
+│                                                                 │
+│   location /admin/   → /usr/share/nginx/html/admin/             │
+│   location /client/  → /usr/share/nginx/html/client/            │
+│   location /demo/    → /usr/share/nginx/html/demo/              │
+│   location /api/     → proxy_pass http://api:3000               │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ internal :3000
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               bharatgeo_api  (Express)                          │
+│                                                                 │
+│  requestLogger → apiKeyAuth → rateLimiter → controller          │
+│                                                                 │
+│  /api/v1/auth/*       JWT authentication                        │
+│  /api/v1/api-keys/*   Key management (JWT)                      │
+│  /api/v1/admin/*      Admin endpoints (JWT + ADMIN role)        │
+│  /api/v1/client/*     Usage endpoints (JWT)                     │
+│  /api/v1/states/*  ─┐                                           │
+│  /api/v1/districts/* ├─ Geo hierarchy  (API Key required)       │
+│  /api/v1/search     ─┘                                          │
+└──────────────────┬────────────────────────┬─────────────────────┘
+                   │                        │
+                   ▼                        ▼
+        PostgreSQL (NeonDB)         Redis (Upstash REST)
+        Geo hierarchy               Search & autocomplete cache
+        Users & API keys            Rate limit counters (daily)
+        ApiLogs (BigInt id)         API key validation cache
 ```
 
 ### Docker Compose Layout
@@ -55,18 +66,19 @@ A production-grade SaaS platform serving India's complete village-level geograph
 ┌────────────────────────────────────────────────────────────────┐
 │  Docker network: bharatgeo_network                             │
 │                                                                │
-│  ┌─────────────────┐   ┌──────────────────────────────────┐    │
-│  │  bharatgeo_api  │   │  bharatgeo_admin        :5174    │   │
-│  │  :3000 (internal│   │  bharatgeo_client_portal :5175   │   │
-│  │  :3000 exposed) │   │  bharatgeo_demo          :5176   │   │
-│  │                 │   │                                  │   │
-│  │  Node.js +      │   │  nginx (static files)            │   │
-│  │  Prisma +       │◄──│  location /api/ →                │   │
-│  │  Express        │   │    proxy_pass http://api:3000    │   │
-│  └─────────────────┘   └──────────────────────────────────┘   │
-│         │                                                      │
-│         ▼  (external)                                          │
-│   NeonDB (Postgres)  +  Upstash (Redis REST)                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  bharatgeo_gateway                            port 80    │  │
+│  │                                                          │  │
+│  │  nginx — serves all 3 static apps + proxies /api/        │  │
+│  │  Built from Dockerfile.gateway (3 parallel build stages) │  │
+│  └────────────────────────────┬─────────────────────────────┘  │
+│                               │ http://api:3000                 │
+│  ┌────────────────────────────▼─────────────────────────────┐  │
+│  │  bharatgeo_api                              (internal)   │  │
+│  │  Node.js + Express + Prisma                              │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                │
+│  External: NeonDB (Postgres)  +  Upstash (Redis REST)          │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -262,21 +274,21 @@ Progress is printed to stdout and saved to a timestamped log file in `scripts/`.
 docker-compose up --build -d
 ```
 
-Docker builds four images and starts them on the internal `bharatgeo_network`:
+Docker builds two containers — the API and a single nginx gateway that serves all three frontends:
 
-| Container | Exposed URL | Description |
-|---|---|---|
-| `bharatgeo_api` | http://localhost:3000 | Express REST API |
-| `bharatgeo_admin` | http://localhost:5174 | Admin dashboard |
-| `bharatgeo_client_portal` | http://localhost:5175 | B2B client portal |
-| `bharatgeo_demo` | http://localhost:5176 | Autocomplete demo |
+| URL | Description |
+|---|---|
+| http://localhost/demo | Autocomplete demo |
+| http://localhost/client | B2B client portal |
+| http://localhost/admin | Admin dashboard |
+| http://localhost/api/v1/health | API health check |
 
-The frontend containers (admin, client-portal, demo) each run nginx. All requests to `/api/*` are proxied internally to `http://api:3000` — no CORS issues, no hardcoded hostnames.
+Everything runs on **port 80**. The gateway nginx serves the three React apps as static files and proxies all `/api/*` requests to the API container internally.
 
 Verify the API is running:
 
 ```bash
-curl http://localhost:3000/api/v1/health
+curl http://localhost/api/v1/health
 # {"success":true,"status":"ok","timestamp":"..."}
 ```
 
@@ -288,7 +300,7 @@ curl http://localhost:3000/api/v1/health
 docker exec -it bharatgeo_api node scripts/create-admin.js
 ```
 
-Follow the prompts (email, name, password). Then log in at **http://localhost:5174**.
+Follow the prompts (email, name, password). Then log in at **http://localhost/admin**.
 
 > See [CREATE_ADMIN.md](CREATE_ADMIN.md) for full details and how to reset a forgotten password.
 
@@ -305,7 +317,7 @@ Follow the prompts (email, name, password). Then log in at **http://localhost:51
 [ ] python scripts/import_data.py — 619,500 villages imported
 [ ] docker-compose up --build -d  — all 4 containers running
 [ ] Admin user created via create-admin.js
-[ ] Logged in at http://localhost:5174
+[ ] Logged in at http://localhost/admin
 ```
 
 ---
@@ -330,7 +342,7 @@ pip install pandas xlrd openpyxl odfpy psycopg2-binary python-dotenv
 python scripts/import_data.py
 ```
 
-Reads all 30 XLS/ODS files from `/dataset` (Census 2011 village directory) and inserts the full hierarchy. Takes 5–15 minutes depending on connection speed. Progress is printed to stdout and written to a timestamped log file.
+Reads all 30 XLS/ODS files from `/dataset` (Census 2011 village directory) and inserts the full hierarchy. Takes 5–15 minutes depending on connection speed. Progress is printed to stdout and written to a timestamped log file. 
 
 **Result:** 619,500 villages, 30 states, 640+ districts, 5,900+ sub-districts.
 
@@ -348,6 +360,9 @@ docker-compose up --build -d
 # View API logs (live)
 docker logs -f bharatgeo_api
 
+# View gateway logs (live)
+docker logs -f bharatgeo_gateway
+
 # Stop all containers
 docker-compose down
 
@@ -356,9 +371,13 @@ docker-compose down -v
 
 # Restart a single service
 docker-compose restart api
+docker-compose restart gateway
 
 # Open a shell in the API container
 docker exec -it bharatgeo_api sh
+
+# Create admin user
+docker exec -it bharatgeo_api node scripts/create-admin.js
 ```
 
 ---

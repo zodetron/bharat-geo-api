@@ -45,8 +45,8 @@ Log in at:
 
 | App | URL |
 |-----|-----|
-| Admin dashboard | http://localhost:5174 |
-| Client portal | http://localhost:5175 |
+| Admin dashboard | http://localhost/admin |
+| Client portal | http://localhost/client |
 
 Use the email and password you entered above. Admin users can log into both apps.
 
