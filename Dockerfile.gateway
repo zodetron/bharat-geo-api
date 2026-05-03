@@ -1,26 +1,37 @@
+# Build-time variables — set these when deploying to production
+# VITE_API_URL         → full URL of your deployed API, e.g. https://bharat-geo-api.onrender.com/api/v1
+# VITE_CLIENT_PORTAL_URL → base URL of client portal, e.g. https://bharat-geo-ui.onrender.com/client
+#                          (leave unset to default to /client — correct for same-domain deployments)
+ARG VITE_API_URL
+ARG VITE_CLIENT_PORTAL_URL
+
 # ── Build: Admin dashboard ───────────────────────────────────────
 FROM node:20-alpine AS admin-builder
+ARG VITE_API_URL
 WORKDIR /app
 COPY admin/package*.json ./
 RUN npm ci
 COPY admin/ ./
-RUN npm run build
+RUN VITE_API_URL=$VITE_API_URL npm run build
 
 # ── Build: Client portal ─────────────────────────────────────────
 FROM node:20-alpine AS client-builder
+ARG VITE_API_URL
 WORKDIR /app
 COPY client-portal/package*.json ./
 RUN npm ci
 COPY client-portal/ ./
-RUN npm run build
+RUN VITE_API_URL=$VITE_API_URL npm run build
 
 # ── Build: Demo app ──────────────────────────────────────────────
 FROM node:20-alpine AS demo-builder
+ARG VITE_API_URL
+ARG VITE_CLIENT_PORTAL_URL
 WORKDIR /app
 COPY demo/package*.json ./
 RUN npm ci
 COPY demo/ ./
-RUN npm run build
+RUN VITE_API_URL=$VITE_API_URL VITE_CLIENT_PORTAL_URL=$VITE_CLIENT_PORTAL_URL npm run build
 
 # ── Runtime: nginx ───────────────────────────────────────────────
 FROM nginx:alpine
