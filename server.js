@@ -1,9 +1,10 @@
 require("dotenv").config();
 
+const path    = require("path");
 const express = require("express");
-const cors = require("cors");
-const prisma = require("./src/lib/prisma");
-const routes = require("./src/routes/index");
+const cors    = require("cors");
+const prisma  = require("./src/lib/prisma");
+const routes  = require("./src/routes/index");
 const { errorHandler, notFound } = require("./src/middleware/errorHandler");
 const { requestLogger } = require("./src/middleware/requestLogger");
 
@@ -15,13 +16,24 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
   : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"];
 
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+// Allow all origins when CORS_ORIGINS=* (useful for same-host deployments)
+const corsOrigin = allowedOrigins[0] === "*" ? "*" : allowedOrigins;
+app.use(cors({ origin: corsOrigin, credentials: corsOrigin !== "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(requestLogger);
 
-// ── Routes ────────────────────────────────────────────────────
+// ── API routes ────────────────────────────────────────────────
 app.use("/api/v1", routes);
+
+// ── Frontend static files (present when built via Dockerfile.render) ──
+const pub = path.join(__dirname, "public");
+["admin", "client", "demo"].forEach((app_) => {
+  const dir = path.join(pub, app_);
+  app.use(`/${app_}`, express.static(dir));
+  app.get(`/${app_}/*`, (_req, res) => res.sendFile(path.join(dir, "index.html")));
+});
+app.get("/", (_req, res) => res.redirect("/demo/"));
 
 // ── 404 + Error handlers ─────────────────────────────────────
 app.use(notFound);
