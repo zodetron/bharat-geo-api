@@ -1,104 +1,106 @@
 import { useEffect, useState } from "react";
 import api from "../api/client";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const PIE_COLORS = ["#8b5cf6", "#6366f1", "#10b981", "#f59e0b"];
-const TOOLTIP_STYLE = { background: "#1e293b", border: "1px solid #334155", borderRadius: "10px", color: "#f1f5f9", fontSize: 12 };
+const PIE_COLORS = ["var(--green)", "var(--purple)", "#f59e0b", "#3b82f6"];
 
 export default function Analytics() {
   const [data, setData]   = useState(null);
   const [days, setDays]   = useState(30);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    api.get(`/admin/analytics?days=${days}`).then(setData).finally(() => setLoading(false));
-  }, [days]);
+  useEffect(() => { setLoading(true); api.get(`/admin/analytics?days=${days}`).then(setData).finally(() => setLoading(false)); }, [days]);
+
+  const tt = { contentStyle: { background: "var(--tooltip-bg)", border: "1px solid var(--card-border)", borderRadius: 10, color: "var(--text)", fontSize: 12 }, labelStyle: { color: "var(--text-2)" } };
+  const sel = { background: "var(--input)", border: "1px solid var(--input-border)", color: "var(--text)", padding: "8px 14px", borderRadius: 10, fontSize: 13, outline: "none", cursor: "pointer" };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <h1 className="text-3xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f1f5f9" }}>Analytics</h1>
-          <p className="text-sm mt-1" style={{ color: "#475569" }}>Request volume and endpoint breakdown</p>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "var(--text)", margin: "0 0 4px" }}>Analytics</h1>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>Request volume and endpoint breakdown</p>
         </div>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="px-4 py-2 rounded-xl text-sm font-medium outline-none"
-          style={{ background: "#1e293b", border: "1px solid #334155", color: "#cbd5e1" }}
-        >
+        <select value={days} onChange={e => setDays(Number(e.target.value))} style={sel}>
           <option value={7}>Last 7 days</option>
           <option value={30}>Last 30 days</option>
           <option value={90}>Last 90 days</option>
         </select>
       </div>
 
-      {loading ? (
-        <div className="flex items-center gap-2" style={{ color: "#475569" }}>
-          <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-          <span className="text-sm">Loading…</span>
-        </div>
-      ) : (
+      {loading ? <Spinner /> : (
         <>
-          <div className="rounded-2xl p-6" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-            <h2 className="text-sm font-bold mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#cbd5e1" }}>Daily Requests</h2>
+          <Card title="Daily Requests">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={data?.daily || []} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#475569" }} tickFormatter={(d) => d.slice(5)} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#94a3b8" }} formatter={(v) => [v.toLocaleString(), "Requests"]} />
-                <Bar dataKey="requests" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickFormatter={d => d.slice(5)} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                <Tooltip {...tt} formatter={v => [v.toLocaleString(), "Requests"]} />
+                <Bar dataKey="requests" fill="var(--green)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl p-6" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-              <h2 className="text-sm font-bold mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#cbd5e1" }}>Top Endpoints</h2>
-              <table className="w-full text-sm">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <Card title="Top Endpoints">
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid #1e293b" }}>
-                    {["Endpoint", "Requests", "Avg ms", "Errors"].map(h => (
-                      <th key={h} className={`pb-3 text-xs font-semibold uppercase tracking-wide ${h !== "Endpoint" ? "text-right" : "text-left"}`} style={{ color: "#475569" }}>{h}</th>
+                  <tr style={{ borderBottom: "1px solid var(--divider)" }}>
+                    {["Endpoint","Requests","Avg ms","Errors"].map((h,i) => (
+                      <th key={h} style={{ padding: "0 0 10px", textAlign: i === 0 ? "left" : "right", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {(data?.endpoints || []).map((e, i) => (
-                    <tr key={e.endpoint} style={{ borderBottom: i < data.endpoints.length - 1 ? "1px solid #1e293b" : "none" }}>
-                      <td className="py-3 font-mono text-xs truncate max-w-[150px]" style={{ color: "#94a3b8" }}>{e.endpoint}</td>
-                      <td className="py-3 text-right text-sm" style={{ color: "#cbd5e1" }}>{e.total.toLocaleString()}</td>
-                      <td className="py-3 text-right text-sm" style={{ color: "#cbd5e1" }}>{e.avgMs}</td>
-                      <td className="py-3 text-right text-sm font-medium" style={{ color: e.errors > 0 ? "#f87171" : "#475569" }}>{e.errors}</td>
+                  {(data?.endpoints || []).map((e, i, arr) => (
+                    <tr key={e.endpoint} style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--divider)" : "none" }}>
+                      <td style={{ padding: "10px 0", fontFamily: "monospace", fontSize: 11, color: "var(--text-2)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.endpoint}</td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: "var(--text)" }}>{e.total.toLocaleString()}</td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: "var(--text)" }}>{e.avgMs}</td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: e.errors > 0 ? "var(--red-text)" : "var(--text-muted)" }}>{e.errors}</td>
                     </tr>
                   ))}
-                  {!data?.endpoints?.length && (
-                    <tr><td colSpan={4} className="py-8 text-center text-sm" style={{ color: "#334155" }}>No data for this period</td></tr>
-                  )}
+                  {!data?.endpoints?.length && <tr><td colSpan={4} style={{ padding: "28px 0", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No data</td></tr>}
                 </tbody>
               </table>
-            </div>
+            </Card>
 
-            <div className="rounded-2xl p-6" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
-              <h2 className="text-sm font-bold mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#cbd5e1" }}>Keys by Plan</h2>
+            <Card title="Keys by Plan">
               {data?.plans?.length ? (
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
-                    <Pie data={data.plans} dataKey="count" nameKey="plan" cx="50%" cy="50%" outerRadius={75} label={({ plan, percent }) => `${plan} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "#334155" }}>
+                    <Pie data={data.plans} dataKey="count" nameKey="plan" cx="50%" cy="50%" outerRadius={80} label={({ plan, percent }) => `${plan} ${(percent * 100).toFixed(0)}%`}>
                       {data.plans.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                     </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Tooltip {...tt} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : (
-                <p className="text-sm text-center py-16" style={{ color: "#334155" }}>No active keys</p>
-              )}
-            </div>
+              ) : <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, padding: "40px 0" }}>No active keys</p>}
+            </Card>
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function Card({ title, children }) {
+  return (
+    <div style={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 18, padding: 24 }}>
+      <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: "var(--text)", margin: "0 0 18px" }}>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 13 }}>
+      <svg className="animate-spin" style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+      </svg>Loading…
     </div>
   );
 }

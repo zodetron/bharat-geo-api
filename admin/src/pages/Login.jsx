@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function Login() {
   const { login } = useAuth();
@@ -10,72 +11,58 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!document.documentElement.dataset.theme)
+      document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  }, []);
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await login(email, password);
-      navigate("/");
-    } catch (err) {
-      setError(err.error || err.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
+    setError(""); setLoading(true);
+    try { await login(email, password); navigate("/"); }
+    catch (err) { setError(err.error || err.message || "Login failed"); }
+    finally { setLoading(false); }
   }
 
+  const inp = { width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 14, outline: "none", background: "var(--input)", border: "1px solid var(--input-border)", color: "var(--text)", transition: "border-color 0.2s", boxSizing: "border-box" };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "radial-gradient(ellipse 90% 60% at 50% -10%, rgba(124,58,237,0.2) 0%, #080c14 65%)" }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "var(--bg-glow)" }}>
+      <div style={{ position: "fixed", top: 16, right: 16 }}><ThemeToggle /></div>
+
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: "linear-gradient(135deg, var(--green), var(--purple))", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 26, height: 26 }}>
               <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f1f5f9" }}>Admin Portal</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Bharat Geo API</p>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 26, color: "var(--text)", margin: "0 0 4px" }}>Admin Portal</h1>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>Bharat Geo API</p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl p-7" style={{ background: "#0f172a", border: "1px solid #1e293b" }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 20, padding: 28 }}>
           {error && (
-            <div className="mb-5 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#fca5a5" }}>
-              {error}
-            </div>
+            <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: "var(--red-dim)", border: "1px solid var(--red-border)", color: "var(--red-text)", fontSize: 13 }}>{error}</div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Email</label>
-              <input
-                type="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                style={{ background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9" }}
-                onFocus={e => e.target.style.borderColor = "#7c3aed"}
-                onBlur={e => e.target.style.borderColor = "#334155"}
-              />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 8 }}>Email</label>
+              <input {...{ type: "email", required: true, value: email, placeholder: "admin@example.com" }}
+                onChange={e => setEmail(e.target.value)} style={inp}
+                onFocus={e => e.target.style.borderColor = "var(--input-focus)"}
+                onBlur={e => e.target.style.borderColor = "var(--input-border)"} />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Password</label>
-              <input
-                type="password" required value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                style={{ background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9" }}
-                onFocus={e => e.target.style.borderColor = "#7c3aed"}
-                onBlur={e => e.target.style.borderColor = "#334155"}
-              />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 8 }}>Password</label>
+              <input {...{ type: "password", required: true, value: password, placeholder: "••••••••" }}
+                onChange={e => setPassword(e.target.value)} style={inp}
+                onFocus={e => e.target.style.borderColor = "var(--input-focus)"}
+                onBlur={e => e.target.style.borderColor = "var(--input-border)"} />
             </div>
-            <button
-              type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl text-sm font-semibold transition-all mt-2"
-              style={{ background: loading ? "#4c1d95" : "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "white", opacity: loading ? 0.7 : 1 }}
-            >
-              {loading ? "Signing in…" : "Sign In"}
+            <button type="submit" disabled={loading}
+              style={{ marginTop: 4, width: "100%", padding: "13px", borderRadius: 12, fontSize: 14, fontWeight: 700, color: "#000", background: loading ? "var(--green-dim)" : "var(--green)", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1, transition: "all 0.2s" }}>
+              {loading ? "Signing in…" : "Sign In →"}
             </button>
           </form>
         </div>

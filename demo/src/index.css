@@ -2,11 +2,95 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* ── Dark theme (default) ─────────────────────────────────── */
+:root {
+  --bg:              #000000;
+  --bg-glow:         radial-gradient(ellipse 120% 60% at 50% -5%, rgba(0,230,118,0.07) 0%, #000000 55%);
+  --sidebar:         #020202;
+  --card:            #0c0c0c;
+  --card-border:     rgba(0, 230, 118, 0.22);
+  --card-border-p:   rgba(176, 110, 255, 0.28);
+  --divider:         rgba(0, 230, 118, 0.1);
+  --input:           #111111;
+  --input-border:    rgba(0, 230, 118, 0.2);
+  --input-focus:     #00e676;
+  --row-hover:       rgba(0, 230, 118, 0.03);
+  --table-head:      rgba(255,255,255,0.02);
+
+  --text:            #ffffff;
+  --text-2:          #aaaaaa;
+  --text-muted:      #555555;
+
+  --green:           #00e676;
+  --green-text:      #4ade80;
+  --green-dim:       rgba(0, 230, 118, 0.1);
+  --green-border:    rgba(0, 230, 118, 0.3);
+
+  --purple:          #b06eff;
+  --purple-text:     #c084fc;
+  --purple-dim:      rgba(176, 110, 255, 0.1);
+  --purple-border:   rgba(176, 110, 255, 0.3);
+
+  --red-dim:         rgba(239,68,68,0.1);
+  --red-border:      rgba(239,68,68,0.28);
+  --red-text:        #fca5a5;
+
+  --yellow-dim:      rgba(245,158,11,0.1);
+  --yellow-border:   rgba(245,158,11,0.28);
+  --yellow-text:     #fcd34d;
+
+  --tooltip-bg:      #111111;
+  --chart-grid:      rgba(255,255,255,0.04);
+  --scrollbar:       #1a1a1a;
+}
+
+/* ── Light theme ──────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:              #ffffff;
+  --bg-glow:         radial-gradient(ellipse 120% 60% at 50% -5%, rgba(0,200,83,0.08) 0%, #ffffff 55%);
+  --sidebar:         #f9fffc;
+  --card:            #ffffff;
+  --card-border:     rgba(0, 180, 70, 0.3);
+  --card-border-p:   rgba(124, 58, 237, 0.28);
+  --divider:         rgba(0, 180, 70, 0.15);
+  --input:           #f4fdf7;
+  --input-border:    rgba(0, 180, 70, 0.28);
+  --input-focus:     #00c853;
+  --row-hover:       rgba(0, 180, 70, 0.04);
+  --table-head:      rgba(0, 0, 0, 0.02);
+
+  --text:            #0a0a0a;
+  --text-2:          #444444;
+  --text-muted:      #888888;
+
+  --green:           #00c853;
+  --green-text:      #065f46;
+  --green-dim:       rgba(0, 180, 70, 0.08);
+  --green-border:    rgba(0, 180, 70, 0.35);
+
+  --purple:          #7c3aed;
+  --purple-text:     #5b21b6;
+  --purple-dim:      rgba(124, 58, 237, 0.08);
+  --purple-border:   rgba(124, 58, 237, 0.3);
+
+  --red-dim:         rgba(220,38,38,0.08);
+  --red-border:      rgba(220,38,38,0.25);
+  --red-text:        #dc2626;
+
+  --yellow-dim:      rgba(217,119,6,0.08);
+  --yellow-border:   rgba(217,119,6,0.25);
+  --yellow-text:     #92400e;
+
+  --tooltip-bg:      #1f2937;
+  --chart-grid:      rgba(0,0,0,0.06);
+  --scrollbar:       #d1fae5;
+}
+
 body {
   margin: 0;
-  background: #080c14;
+  background: var(--bg);
   font-family: 'Inter', system-ui, sans-serif;
-  color: #f1f5f9;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -14,11 +98,10 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-code, pre, .font-mono {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+code, pre, .mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
