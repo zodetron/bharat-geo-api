@@ -11,7 +11,9 @@
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +32,7 @@
     "seed": "node prisma/seed.js"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "wrangler": "^4.92.0"
   }
 }
